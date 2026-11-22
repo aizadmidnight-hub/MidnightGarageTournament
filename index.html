@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MIDNIGHT GARAGE TOURNAMENT</title>
+  <style>
+    :root {
+      --bg: #07111f; --panel: rgba(15, 30, 49, 0.94); --line: rgba(255,255,255,0.12);
+      --text: #f6f8fb; --muted: #9fb0c3; --accent: #42d392; --accent-2: #56a8ff;
+      --warning: #ffbd4a; --danger: #ff6577; --shadow: 0 20px 55px rgba(0,0,0,.4);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0; font-family: system-ui, -apple-system, sans-serif; color: var(--text);
+      background: linear-gradient(rgba(4,12,22,.82), rgba(4,12,22,.88)), url('BG.jpg') center/cover fixed, #06101c;
+      padding: 20px;
+    }
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; }
+    .role-gate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: rgba(2,7,13,.95); }
+    .role-gate.hidden { display: none; }
+    .gate-card { width: min(440px, 100%); padding: 26px; border: 1px solid var(--line); border-radius: 22px; background: #0f1e31; box-shadow: var(--shadow); text-align: center; }
+    .gate-card h2 { margin: 0 0 8px; color: var(--accent); }
+    .gate-card p { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
+    .gate-actions { display: grid; gap: 10px; }
+    .gate-card input { margin: 12px 0 8px; padding: 12px; width: 100%; color: #fff; background: rgba(0,0,0,.4); border: 1px solid var(--line); border-radius: 12px; text-align: center; }
+    body.live-mode .admin-only { display: none !important; }
+    .app { width: min(1400px, 100%); margin: 0 auto; }
+    .hero { display: flex; justify-content: space-between; align-items: center; gap: 16px; margin-bottom: 18px; flex-wrap: wrap; }
+    .hero-left { display: flex; align-items: center; gap: 14px; }
+    .brand-logo { width: 80px; height: 80px; object-fit: contain; border-radius: 16px; background: rgba(255,255,255,.07); padding: 8px; border: 1px solid var(--line); }
+    .hero h1 { font-size: clamp(22px, 3.5vw, 38px); margin: 0 0 4px; }
+    .hero p { margin: 0; color: var(--muted); font-size: 13px; }
+    .hero-right { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+    .status-pill { display: inline-flex; align-items: center; gap: 8px; padding: 9px 14px; border-radius: 99px; border: 1px solid rgba(66,211,146,.3); background: rgba(66,211,146,.1); color: #b9f4db; font-size: 13px; font-weight: 800; }
+    .status-dot { width: 9px; height: 9px; border-radius: 50%; background: var(--accent); }
+    .sponsor-box { padding: 8px 14px; border-radius: 14px; border: 1px solid var(--line); background: rgba(7,17,31,.6); }
+    .sponsor-logo { max-width: 220px; max-height: 68px; object-fit: contain; display: block; }
+    .nav-tabs { display: flex; gap: 8px; margin-bottom: 18px; flex-wrap: wrap; }
+    .nav-btn { padding: 11px 18px; border-radius: 12px; border: 1px solid var(--line); background: rgba(255,255,255,.05); color: var(--muted); font-weight: 800; }
+    .nav-btn.active { background: rgba(66,211,146,.18); border-color: var(--accent); color: #eafff6; }
+    .card { background: var(--panel); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--shadow); overflow: hidden; margin-bottom: 18px; }
+    .card-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 16px 20px; border-bottom: 1px solid var(--line); flex-wrap: wrap; }
+    .card-head h2 { margin: 0; font-size: 17px; }
+    .card-body { padding: 18px; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1.6fr; gap: 18px; }
+    .field { margin-bottom: 12px; }
+    .field label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; color: var(--muted); margin-bottom: 6px; }
+    input[type="text"], input[type="number"], textarea, select { width: 100%; color: #fff; background: rgba(255,255,255,.06); border: 1px solid var(--line); border-radius: 12px; padding: 11px 12px; outline: none; }
+    textarea { min-height: 180px; resize: vertical; line-height: 1.5; }
+    .primary-btn, .secondary-btn, .danger-btn { border: 0; border-radius: 12px; padding: 11px 16px; font-weight: 800; }
+    .primary-btn { color: #052015; background: linear-gradient(135deg, #67e8b2, #42d392); }
+    .secondary-btn { color: #fff; background: rgba(255,255,255,.09); border: 1px solid var(--line); }
+    .danger-btn { color: #ffdce1; background: rgba(255,101,119,.14); border: 1px solid rgba(255,101,119,.3); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 11px 10px; text-align: center; border-bottom: 1px solid var(--line); }
+    th { font-size: 11px; text-transform: uppercase; color: var(--muted); background: rgba(255,255,255,.03); }
+    td.team-col, th.team-col { text-align: left; font-weight: 800; }
+    tr.qualify { background: rgba(66,211,146,.08); }
+    .match-list { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 12px; }
+    .match-card { border: 1px solid var(--line); border-radius: 14px; padding: 12px; background: rgba(255,255,255,.03); }
+    .match-meta { display: flex; justify-content: space-between; font-size: 11px; color: var(--muted); font-weight: 800; margin-bottom: 8px; text-transform: uppercase; }
+    .match-row { display: grid; grid-template-columns: 1fr 56px 1fr; align-items: center; gap: 8px; }
+    .match-team { font-weight: 800; font-size: 14px; }
+    .match-team.right { text-align: right; }
+    .match-team.win { color: var(--accent); }
+    .score-box { display: flex; gap: 4px; align-items: center; justify-content: center; }
+    .score-input { width: 38px !important; padding: 6px 4px !important; text-align: center; font-weight: 900; border-radius: 8px !important; }
+    .score-badge { background: rgba(255,255,255,.08); padding: 6px 10px; border-radius: 8px; font-weight: 900; font-size: 14px; }
+    .bracket-wrap { display: flex; gap: 24px; overflow-x: auto; padding-bottom: 12px; }
+    .bracket-round { min-width: 260px; display: flex; flex-direction: column; justify-content: space-around; gap: 14px; }
+    .round-title { text-align: center; font-size: 12px; font-weight: 900; color: var(--accent); text-transform: uppercase; letter-spacing: .08em; margin-bottom: 8px; }
+    .bracket-match { border: 1px solid var(--line); border-radius: 14px; background: rgba(255,255,255,.04); overflow: hidden; }
+    .b-slot { display: flex; justify-content: space-between; align-items: center; padding: 9px 12px; border-bottom: 1px solid var(--line); gap: 8px; }
+    .b-slot:last-child { border-bottom: 0; }
+    .b-slot.winner { background: rgba(66,211,146,.14); color: #eafff6; font-weight: 900; }
+    .champion-banner { text-align: center; padding: 20px; border-radius: 18px; background: linear-gradient(135deg, rgba(255,189,74,.18), rgba(66,211,146,.18)); border: 1px solid rgba(255,189,74,.4); margin-bottom: 18px; }
+    .champion-banner h2 { margin: 0; color: var(--warning); font-size: clamp(22px, 4vw, 34px); }
+    .toast { position: fixed; right: 20px; bottom: 20px; padding: 12px 16px; border-radius: 12px; background: #12233a; border: 1px solid var(--line); font-weight: 800; font-size: 13px; opacity: 0; transition: .25s; pointer-events: none; z-index: 99; }
+    .toast.show { opacity: 1; }
+    .view-section { display: none; }
+    .view-section.active { display: block; }
+    @media (max-width: 850px) { .grid-2 { grid-template-columns: 1fr; } }
+  </style>
+</head>
+<body>
+  <div id="roleGate" class="role-gate">
+    <div class="gate-card">
+      <h2>TOURNAMENT LIVE</h2>
+      <p>Pilih mod paparan untuk melihat jadual perlawanan, carta kedudukan dan bracket kejohanan secara langsung.</p>
+      <div class="gate-actions">
+        <button id="btnLive" class="primary-btn" type="button">👀 Masuk Sebagai Peserta / Penonton (Live)</button>
+        <button id="btnAdmin" class="secondary-btn" type="button">🔑 Masuk Sebagai Admin</button>
+      </div>
+      <div id="adminLoginBox" hidden>
+        <input type="password" id="adminPass" placeholder="Masukkan Kata Laluan Admin" />
+        <button id="btnVerifyAdmin" class="primary-btn" style="width:100%" type="button">Sahkan & Masuk</button>
+        <div id="loginErr" style="color:var(--danger);font-size:13px;margin-top:8px;" hidden>Kata laluan salah!</div>
+      </div>
+    </div>
+  </div>
+
+  <main class="app">
+    <header class="hero">
+      <div class="hero-left">
+        <img src="logo.png" alt="Logo" class="brand-logo" onerror="this.style.display='none'" />
+        <div>
+          <h1 id="tourneyTitleDisplay">MIDNIGHT GARAGE TOURNAMENT</h1>
+          <p id="tourneySubtitle">Jadual Perlawanan, Carta Kedudukan & Carta Kalah Mati Secara Langsung</p>
+        </div>
+      </div>
+      <div class="hero-right">
+        <div class="status-pill" id="liveStatusPill"><span class="status-dot"></span> LIVE SYNC AKTIF</div>
+        <div class="sponsor-box"><img src="sponsor.png" alt="Sponsor" class="sponsor-logo" onerror="this.parentElement.style.display='none'" /></div>
+      </div>
+    </header>
+
+    <div id="championBanner" class="champion-banner" hidden>
+      <div style="font-size:12px;font-weight:900;letter-spacing:.12em;text-transform:uppercase;color:#fff;margin-bottom:4px;">🏆 Juara Kejohanan 🏆</div>
+      <h2 id="championName">-</h2>
+    </div>
+
+    <div class="nav-tabs">
+      <button class="nav-btn active admin-only" data-tab="setupView" type="button">⚙️ 1. Tetapan & Pasukan</button>
+      <button class="nav-btn" data-tab="groupView" id="tabGroupBtn" type="button">📊 Peringkat Kumpulan & Jadual</button>
+      <button class="nav-btn" data-tab="bracketView" id="tabBracketBtn" type="button">🏆 Carta Kalah Mati (Bracket)</button>
+    </div>
+
+    <!-- BAHAGIAN 1: TETAPAN ADMIN -->
+    <section id="setupView" class="view-section active admin-only">
+      <div class="grid-2">
+        <article class="card">
+          <div class="card-head"><h2>Tetapan Kejohanan</h2></div>
+          <div class="card-body">
+            <div class="field">
+              <label>Nama Kejohanan</label>
+              <input type="text" id="tourneyNameInput" value="MIDNIGHT GARAGE TOURNAMENT" />
+            </div>
+            <div class="field">
+              <label>Format Kejohanan</label>
+              <select id="formatSelect">
+                <option value="group_knockout">Kumpulan (Liga) + Kalah Mati</option>
+                <option value="knockout">Kalah Mati Terus (Single Elimination)</option>
+                <option value="league">Liga Penuh (Round Robin Sahaja)</option>
+              </select>
+            </div>
+            <div class="field" id="groupCountField">
+              <label>Bilangan Kumpulan</label>
+                            <select id="groupCountSelect">
+                <option value="1">1 Kumpulan (Semua dalam 1 Liga)</option>
+                <option value="2" selected>2 Kumpulan (Kumpulan A - B)</option>
+                <option value="3">3 Kumpulan (Kumpulan A - C)</option>
+                <option value="4">4 Kumpulan (Kumpulan A - D)</option>
+                <option value="5">5 Kumpulan (Kumpulan A - E)</option>
+                <option value="6">6 Kumpulan (Kumpulan A - F)</option>
+                <option value="7">7 Kumpulan (Kumpulan A - G)</option>
+                <option value="8">8 Kumpulan (Kumpulan A - H)</option>
+                <option value="9">9 Kumpulan (Kumpulan A - I)</option>
+                <option value="10">10 Kumpulan (Kumpulan A - J)</option>
+                <option value="11">11 Kumpulan (Kumpulan A - K)</option>
+                <option value="12">12 Kumpulan (Kumpulan A - L)</option>
+                <option value="13">13 Kumpulan (Kumpulan A - M)</option>
+                <option value="14">14 Kumpulan (Kumpulan A - N)</option>
+                <option value="15">15 Kumpulan (Kumpulan A - O)</option>
+                <option value="16">16 Kumpulan (Kumpulan A - P)</option>
+              </select>
+            </div>
+                        <div class="field" id="assignModeField">
+              <label>Cara Agihan Pasukan ke Kumpulan</label>
+              <select id="assignModeSelect">
+                <option value="auto">Automatik (Agih dari Senarai Utama)</option>
+                <option value="manual">Manual (Tetapkan Pasukan Setiap Kumpulan)</option>
+              </select>
+            </div>
+
+            <div class="field" id="qualifyCountField">
+              <label>Pasukan Layak ke Kalah Mati (Setiap Kumpulan)</label>
+              <select id="qualifyCountSelect">
+                <option value="1">Top 1 Setiap Kumpulan</option>
+                <option value="2" selected>Top 2 Setiap Kumpulan</option>
+                <option value="4">Top 4 Setiap Kumpulan</option>
+              </select>
+            </div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;">
+              <button id="btnGenerateTourney" class="primary-btn" type="button">Jana Jadual & Bracket</button>
+              <button id="btnResetTourney" class="danger-btn" type="button">Reset Semua</button>
+            </div>
+          </div>
+        </article>
+
+        <article class="card">
+          <div class="card-head">
+            <h2>Senarai Pasukan (<span id="teamCountLabel">0</span>)</h2>
+            <button id="btnShuffleTeams" class="secondary-btn" type="button">🔀 Kocok Susunan</button>
+          </div>
+          <div class="card-body">
+                      <div id="autoTeamsBox">
+              <textarea id="teamsTextarea" placeholder="Masukkan satu nama pasukan setiap baris...&#10;Team A&#10;Team B&#10;Team C&#10;Team D&#10;Team E&#10;Team F&#10;Team G&#10;Team H">Team A
+Team B
+Team C
+Team D
+Team E
+Team F
+Team G
+Team H</textarea>
+              <div style="color:var(--muted);font-size:12px;margin-top:8px;">Tip: Anda boleh salin terus senarai nama pasukan daripada keputusan <strong>Group Draw</strong> anda dan tampal di sini.</div>
+            </div>
+            <div id="manualGroupsBox" hidden></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <!-- BAHAGIAN 2: PERINGKAT KUMPULAN -->
+    <section id="groupView" class="view-section">
+      <div id="groupsContainer"></div>
+      <div class="admin-only" style="text-align:right;margin-bottom:20px;" id="advanceKnockoutWrap">
+        <button id="btnAdvanceKnockout" class="primary-btn" type="button">Hantar Pasukan Layak ke Bracket Kalah Mati →</button>
+      </div>
+    </section>
+
+    <!-- BAHAGIAN 3: CARTA KALAH MATI (BRACKET) -->
+    <section id="bracketView" class="view-section">
+      <article class="card">
+        <div class="card-head">
+          <h2>Carta Kalah Mati (Knockout Bracket)</h2>
+          <span style="font-size:12px;color:var(--muted);" class="admin-only">Masukkan skor untuk mara secara automatik ke pusingan seterusnya</span>
+        </div>
+        <div class="card-body">
+          <div id="bracketContainer" class="bracket-wrap"></div>
+        </div>
+      </article>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+  <script>
+  (() => {
+    let liveRef = null;
+    const initFirebaseSafe = () => {
+      if (liveRef || typeof firebase === "undefined") return;
+      try {
+        if (!firebase.apps.length) {
+          firebase.initializeApp({ databaseURL: "https://" + "mg-luckydraw-default-rtdb.asia-southeast1.firebasedatabase.app" });
+        }
+        liveRef = firebase.database().ref("midnightGarageTournamentLiveV1");
+      } catch (e) {}
+    };
+
+    const loadSdk = (file, cb) => {
+      const s = document.createElement("script");
+      s.src = "https://" + "://gstatic.com" + file;
+      s.onload = cb;
+      document.head.appendChild(s);
+    };
+    loadSdk("firebase-app-compat.js", () => loadSdk("firebase-database-compat.js", initFirebaseSafe));
+
+    const ADMIN_PASS = "75944624";
+    const STORAGE_KEY = "midnightGarageTourneyV1";
+    let userRole = null;
+    let state = {
+      title: "MIDNIGHT GARAGE TOURNAMENT",
+      format: "group_knockout",
+      groupCount: 2,
+      qualifyCount: 2,
+      teamsText: "Team A\nTeam B\nTeam C\nTeam D\nTeam E\nTeam F\nTeam G\nTeam H",
+      groups: [],
+      bracket: [],
+      champion: ""
+    };
+
+    const $ = id => document.getElementById(id);
+    const esc = s => String(s || "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;");
+    const showToast = msg => { const t = $("toast"); t.textContent = msg; t.classList.add("show"); setTimeout(() => t.classList.remove("show"), 2600); };
+    const getTeamList = () => [...new Set($("teamsTextarea").value.split(/\r?\n/).map(x => x.trim()).filter(Boolean))];
+
+        const syncLive = () => {
+      if (userRole !== "admin") return;
+      try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+      initFirebaseSafe();
+      if (liveRef) liveRef.set({ ...state, updatedAt: Date.now() }).catch(() => {});
+    };
+
+    const switchTab = tabId => {
+      document.querySelectorAll(".nav-btn").forEach(b => b.classList.toggle("active", b.dataset.tab === tabId));
+      document.querySelectorAll(".view-section").forEach(s => s.classList.toggle("active", s.id === tabId));
+    };
+
+    document.querySelectorAll(".nav-btn").forEach(btn => {
+      btn.addEventListener("click", () => switchTab(btn.dataset.tab));
+    });
+
+        const updateManualTotalCount = () => {
+      const textareas = Array.from($("manualGroupsBox").querySelectorAll("textarea"));
+      const all = textareas.flatMap(ta => ta.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean));
+      $("teamCountLabel").textContent = new Set(all).size;
+    };
+
+    const renderManualGroupInputs = () => {
+      const box = $("manualGroupsBox");
+      if (!box) return;
+      const gCount = Number($("groupCountSelect").value) || 2;
+      const oldValues = Array.from(box.querySelectorAll("textarea")).map(t => t.value);
+      box.innerHTML = "";
+      box.style.cssText = "display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;";
+      for (let i = 0; i < gCount; i++) {
+        const wrap = document.createElement("div");
+        const lbl = document.createElement("label");
+        lbl.textContent = `Kumpulan ${String.fromCharCode(65 + i)} (1 Pasukan / Baris)`;
+        lbl.style.cssText = "display:block;font-size:11px;font-weight:800;color:var(--accent);margin-bottom:6px;text-transform:uppercase;";
+        const ta = document.createElement("textarea");
+        ta.style.minHeight = "130px";
+        ta.placeholder = `Team ${i * 2 + 1}\nTeam ${i * 2 + 2}`;
+        ta.value = oldValues[i] || "";
+        ta.addEventListener("input", updateManualTotalCount);
+        wrap.append(lbl, ta);
+        box.appendChild(wrap);
+      }
+      updateManualTotalCount();
+    };
+
+    const updateFormVisibility = () => {
+      const fmt = $("formatSelect").value;
+      const isManual = $("assignModeSelect").value === "manual";
+      $("groupCountField").style.display = fmt === "knockout" ? "none" : "block";
+      $("assignModeField").style.display = fmt === "group_knockout" ? "block" : "none";
+      $("qualifyCountField").style.display = fmt === "group_knockout" ? "block" : "none";
+      $("autoTeamsBox").hidden = fmt === "group_knockout" && isManual;
+      $("manualGroupsBox").hidden = !(fmt === "group_knockout" && isManual);
+      $("btnShuffleTeams").style.display = (fmt === "group_knockout" && isManual) ? "none" : "inline-block";
+      if (fmt === "group_knockout" && isManual) {
+        renderManualGroupInputs();
+      } else {
+        $("teamCountLabel").textContent = getTeamList().length;
+      }
+    };
+
+    $("assignModeSelect").addEventListener("change", updateFormVisibility);
+    $("groupCountSelect").addEventListener("change", updateFormVisibility);
+
+
+    $("formatSelect").addEventListener("change", updateFormVisibility);
+    $("teamsTextarea").addEventListener("input", () => {
+      $("teamCountLabel").textContent = getTeamList().length;
+    });
+
+    $("btnShuffleTeams").addEventListener("click", () => {
+      const list = getTeamList();
+      for (let i = list.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [list[i], list[j]] = [list[j], list[i]];
+      }
+      $("teamsTextarea").value = list.join("\n");
+      $("teamCountLabel").textContent = list.length;
+      showToast("Susunan pasukan telah dikocok.");
+    });
+
+    const buildRoundRobinMatches = (teams) => {
+      const matches = [];
+      let mNum = 1;
+      for (let i = 0; i < teams.length; i++) {
+        for (let j = i + 1; j < teams.length; j++) {
+          matches.push({ id: `m-${mNum++}`, home: teams[i], away: teams[j], homeScore: "", awayScore: "" });
+        }
+      }
+      return matches;
+    };
+
+    const buildKnockoutRounds = (teams) => {
+      let size = 2;
+      while (size < teams.length) size *= 2;
+      const seeded = [...teams];
+      while (seeded.length < size) seeded.push("BYE");
+
+      const rounds = [];
+      let currentMatches = [];
+      for (let i = 0; i < size; i += 2) {
+        const h = seeded[i], a = seeded[i + 1];
+        const isBye = a === "BYE" || h === "BYE";
+        currentMatches.push({
+          id: `r0-m${i / 2}`, home: h, away: a,
+          homeScore: isBye ? (h === "BYE" ? 0 : 1) : "",
+          awayScore: isBye ? (a === "BYE" ? 0 : 1) : ""
+        });
+      }
+      rounds.push({ name: size === 2 ? "Final" : size === 4 ? "Separuh Akhir" : size === 8 ? "Suku Akhir" : `Pusingan ${size}`, matches: currentMatches });
+
+      let rIdx = 1, prevCount = currentMatches.length;
+      while (prevCount > 1) {
+        const nextCount = prevCount / 2;
+        const rName = nextCount === 1 ? "Final" : nextCount === 2 ? "Separuh Akhir" : nextCount === 4 ? "Suku Akhir" : `Pusingan ${nextCount * 2}`;
+        const nextMatches = Array.from({ length: nextCount }, (_, idx) => ({
+          id: `r${rIdx}-m${idx}`, home: "Menunggu", away: "Menunggu", homeScore: "", awayScore: ""
+        }));
+        rounds.push({ name: rName, matches: nextMatches });
+        prevCount = nextCount;
+        rIdx++;
+      }
+      return propagateBracket(rounds);
+    };
+
+    const propagateBracket = (rounds) => {
+      state.champion = "";
+      for (let r = 0; r < rounds.length; r++) {
+        const matches = rounds[r].matches;
+        for (let m = 0; m < matches.length; m++) {
+          const match = matches[m];
+          const hs = match.homeScore === "" ? null : Number(match.homeScore);
+          const as = match.awayScore === "" ? null : Number(match.awayScore);
+          let winner = "Menunggu";
+          if (match.away === "BYE" && match.home !== "Menunggu") winner = match.home;
+          else if (match.home === "BYE" && match.away !== "Menunggu") winner = match.away;
+          else if (hs !== null && as !== null && hs !== as) winner = hs > as ? match.home : match.away;
+
+          if (r + 1 < rounds.length) {
+            const targetMatch = rounds[r + 1].matches[Math.floor(m / 2)];
+            if (m % 2 === 0) targetMatch.home = winner;
+            else targetMatch.away = winner;
+          } else if (winner !== "Menunggu") {
+            state.champion = winner;
+          }
+        }
+      }
+      return rounds;
+    };
+
+    const computeStandings = (group) => {
+      const stats = {};
+      group.teams.forEach(t => stats[t] = { team: t, p: 0, w: 0, d: 0, l: 0, gf: 0, ga: 0, gd: 0, pts: 0 });
+      group.matches.forEach(m => {
+        if (m.homeScore === "" || m.awayScore === "") return;
+        const hs = Number(m.homeScore), as = Number(m.awayScore);
+        if (Number.isNaN(hs) || Number.isNaN(as)) return;
+        const h = stats[m.home], a = stats[m.away];
+        if (!h || !a) return;
+        h.p++; a.p++; h.gf += hs; h.ga += as; a.gf += as; a.ga += hs;
+        if (hs > as) { h.w++; h.pts += 3; a.l++; }
+        else if (hs < as) { a.w++; a.pts += 3; h.l++; }
+        else { h.d++; a.d++; h.pts += 1; a.pts += 1; }
+      });
+      return Object.values(stats).map(s => ({ ...s, gd: s.gf - s.ga }))
+        .sort((a, b) => b.pts - a.pts || b.gd - a.gd || b.gf - a.gf || a.team.localeCompare(b.team));
+    };
+    const el = (tag, cls, txt) => {
+      const node = document.createElement(tag);
+      if (cls) node.className = cls;
+      if (txt !== undefined && txt !== null) node.textContent = String(txt);
+      return node;
+    };
+
+        $("btnGenerateTourney").addEventListener("click", () => {
+      const teams = getTeamList();
+      const fmt = $("formatSelect").value;
+      const isManual = fmt === "group_knockout" && $("assignModeSelect").value === "manual";
+      if (!isManual && teams.length < 2) return showToast("Masukkan sekurang-kurangnya 2 pasukan.");
+      if ((state.groups.length || state.bracket.length) && !confirm("Jana jadual baharu? Semua skor sedia ada akan diganti.")) return;
+
+      state.title = $("tourneyNameInput").value.trim() || "MIDNIGHT GARAGE TOURNAMENT";
+      state.format = fmt;
+      state.groupCount = Number($("groupCountSelect").value);
+      state.qualifyCount = Number($("qualifyCountSelect").value);
+      state.teamsText = $("teamsTextarea").value;
+      state.groups = [];
+      state.bracket = [];
+      state.champion = "";
+
+      if (state.format === "knockout") {
+        state.bracket = buildKnockoutRounds(teams);
+        syncLive();
+        renderAll();
+        switchTab("bracketView");
+      } else {
+        const gCount = state.format === "league" ? 1 : Math.min(state.groupCount, 16);
+        const groups = Array.from({ length: gCount }, (_, i) => ({
+          name: gCount === 1 ? "Carta Liga" : `Kumpulan ${String.fromCharCode(65 + i)}`,
+          teams: [],
+          matches: []
+        }));
+
+        if (isManual) {
+          const textareas = Array.from($("manualGroupsBox").querySelectorAll("textarea"));
+          let totalManual = 0;
+          textareas.forEach((ta, idx) => {
+            if (groups[idx]) {
+              groups[idx].teams = [...new Set(ta.value.split(/\r?\n/).map(x => x.trim()).filter(Boolean))];
+              totalManual += groups[idx].teams.length;
+            }
+          });
+          if (totalManual < 2) return showToast("Masukkan pasukan ke dalam kumpulan dahulu.");
+        } else {
+          teams.forEach((t, idx) => groups[idx % gCount].teams.push(t));
+        }
+
+        groups.forEach(g => g.matches = buildRoundRobinMatches(g.teams));
+        state.groups = groups;
+        syncLive();
+        renderAll();
+        switchTab("groupView");
+      }
+      showToast("Jadual kejohanan berjaya dijana!");
+    });
+
+    $("btnAdvanceKnockout").addEventListener("click", () => {
+      if (!state.groups.length) return;
+      const qualified = [];
+      state.groups.forEach(g => {
+        computeStandings(g).slice(0, state.qualifyCount).forEach(r => qualified.push(r.team));
+      });
+      if (qualified.length < 2) return showToast("Tidak cukup pasukan layak.");
+      state.bracket = buildKnockoutRounds(qualified);
+      syncLive();
+      renderAll();
+      switchTab("bracketView");
+      showToast(`${qualified.length} pasukan layak dihantar ke Bracket Kalah Mati!`);
+    });
+
+    $("btnResetTourney").addEventListener("click", () => {
+      if (!confirm("Reset semua jadual dan keputusan kejohanan?")) return;
+      state.groups = [];
+      state.bracket = [];
+      state.champion = "";
+      syncLive();
+      renderAll();
+      showToast("Semua data kejohanan telah direset.");
+    });
+
+    const renderGroupsDOM = () => {
+      const wrap = $("groupsContainer");
+      wrap.innerHTML = "";
+      state.groups.forEach((g, gIdx) => {
+        const card = el("article", "card");
+        const head = el("div", "card-head");
+        head.append(el("h2", "", g.name), el("span", "", `${g.teams.length} Pasukan`));
+        head.lastChild.style.cssText = "font-size:12px;color:var(--muted);";
+
+        const body = el("div", "card-body");
+        const tblWrap = el("div");
+        tblWrap.style.cssText = "overflow-x:auto;margin-bottom:18px;";
+        const table = el("table");
+        const thead = el("thead");
+        const hRow = el("tr");
+        ["#", "Pasukan", "P", "M", "S", "K", "JG", "GB", "PG", "Mata"].forEach((lbl, i) => {
+          hRow.appendChild(el("th", i === 1 ? "team-col" : "", lbl));
+        });
+        thead.appendChild(hRow);
+
+        const tbody = el("tbody");
+        computeStandings(g).forEach((r, idx) => {
+          const tr = el("tr", state.format === "group_knockout" && idx < state.qualifyCount ? "qualify" : "");
+          const cells = [idx + 1, r.team, r.p, r.w, r.d, r.l, r.gf, r.ga, r.gd > 0 ? `+${r.gd}` : r.gd, r.pts];
+          cells.forEach((val, cIdx) => {
+            const td = el("td", cIdx === 1 ? "team-col" : "", val);
+            if (cIdx === 9) td.style.cssText = "font-weight:900;color:var(--accent);";
+            tr.appendChild(td);
+          });
+          tbody.appendChild(tr);
+        });
+        table.append(thead, tbody);
+        tblWrap.appendChild(table);
+
+        const matchGrid = el("div", "match-list");
+        g.matches.forEach((m, mIdx) => {
+          const hs = m.homeScore === "" ? null : Number(m.homeScore);
+          const as = m.awayScore === "" ? null : Number(m.awayScore);
+          const mCard = el("div", "match-card");
+          const meta = el("div", "match-meta");
+          meta.append(el("span", "", `Perlawanan #${mIdx + 1}`), el("span", "", hs !== null && as !== null ? "Tamat" : "Belum Main"));
+
+          const row = el("div", "match-row");
+          const homeEl = el("div", `match-team ${hs !== null && as !== null && hs > as ? "win" : ""}`, m.home);
+          const awayEl = el("div", `match-team right ${hs !== null && as !== null && as > hs ? "win" : ""}`, m.away);
+
+          let midEl;
+          if (userRole === "admin") {
+            midEl = el("div", "score-box");
+            const inH = el("input", "score-input");
+            inH.type = "number"; inH.min = "0"; inH.value = m.homeScore;
+            inH.onchange = e => { state.groups[gIdx].matches[mIdx].homeScore = e.target.value; syncLive(); renderAll(); };
+            const inA = el("input", "score-input");
+            inA.type = "number"; inA.min = "0"; inA.value = m.awayScore;
+            inA.onchange = e => { state.groups[gIdx].matches[mIdx].awayScore = e.target.value; syncLive(); renderAll(); };
+            midEl.append(inH, el("span", "", "-"), inA);
+          } else {
+            midEl = el("div", "score-badge", `${m.homeScore === "" ? "-" : m.homeScore} : ${m.awayScore === "" ? "-" : m.awayScore}`);
+          }
+          row.append(homeEl, midEl, awayEl);
+          mCard.append(meta, row);
+          matchGrid.appendChild(mCard);
+        });
+
+        body.append(tblWrap, matchGrid);
+        card.append(head, body);
+        wrap.appendChild(card);
+      });
+    };
+    const renderBracketDOM = () => {
+      const wrap = $("bracketContainer");
+      wrap.innerHTML = "";
+      if (!state.bracket.length) {
+        const empty = el("div", "", "Belum ada carta kalah mati dijana.");
+        empty.style.cssText = "color:var(--muted);padding:20px;";
+        wrap.appendChild(empty);
+        return;
+      }
+      state.bracket.forEach((round, rIdx) => {
+        const col = el("div", "bracket-round");
+        col.appendChild(el("div", "round-title", round.name));
+        round.matches.forEach((m, mIdx) => {
+          const hs = m.homeScore === "" ? null : Number(m.homeScore);
+          const as = m.awayScore === "" ? null : Number(m.awayScore);
+          const hWin = (m.away === "BYE" && m.home !== "Menunggu") || (hs !== null && as !== null && hs > as);
+          const aWin = (m.home === "BYE" && m.away !== "Menunggu") || (hs !== null && as !== null && as > hs);
+          const disabled = userRole !== "admin" || m.home === "Menunggu" || m.away === "Menunggu" || m.home === "BYE" || m.away === "BYE";
+
+          const bMatch = el("div", "bracket-match");
+          const makeSlot = (teamName, isWin, scoreVal, sideKey) => {
+            const slot = el("div", `b-slot ${isWin ? "winner" : ""}`);
+            slot.appendChild(el("span", "", teamName));
+            if (!disabled) {
+              const inp = el("input", "score-input");
+              inp.type = "number"; inp.min = "0"; inp.value = scoreVal;
+              inp.onchange = e => {
+                state.bracket[rIdx].matches[mIdx][sideKey] = e.target.value;
+                state.bracket = propagateBracket(state.bracket);
+                syncLive();
+                renderAll();
+              };
+              slot.appendChild(inp);
+            } else {
+              slot.appendChild(el("strong", "", scoreVal === "" ? "-" : scoreVal));
+            }
+            return slot;
+          };
+          bMatch.append(makeSlot(m.home, hWin, m.homeScore, "homeScore"), makeSlot(m.away, aWin, m.awayScore, "awayScore"));
+          col.appendChild(bMatch);
+        });
+        wrap.appendChild(col);
+      });
+    };
+
+    const renderAll = () => {
+      document.title = $("tourneyTitleDisplay").textContent = state.title;
+      if ($("tourneyNameInput")) $("tourneyNameInput").value = state.title;
+      if ($("teamsTextarea") && userRole === "admin") {
+        $("teamsTextarea").value = state.teamsText;
+        $("teamCountLabel").textContent = getTeamList().length;
+      }
+      $("championBanner").hidden = !state.champion;
+      if (state.champion) $("championName").textContent = state.champion;
+      $("tabGroupBtn").style.display = state.format === "knockout" ? "none" : "inline-block";
+      $("tabBracketBtn").style.display = state.format === "league" ? "none" : "inline-block";
+      $("advanceKnockoutWrap").style.display = state.format === "group_knockout" && state.groups.length ? "block" : "none";
+      renderGroupsDOM();
+      renderBracketDOM();
+    };
+
+    $("btnAdmin").addEventListener("click", () => { $("adminLoginBox").hidden = false; $("adminPass").focus(); });
+    $("adminPass").addEventListener("keyup", e => { if (e.key === "Enter") $("btnVerifyAdmin").click(); });
+    $("btnVerifyAdmin").addEventListener("click", () => {
+      if ($("adminPass").value !== ADMIN_PASS) return ($("loginErr").hidden = false);
+      userRole = "admin";
+      $("roleGate").classList.add("hidden");
+      try {
+        const saved = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (saved && saved.title) state = { ...state, ...saved };
+      } catch (e) {}
+      $("formatSelect").value = state.format;
+      $("groupCountSelect").value = String(state.groupCount);
+      $("qualifyCountSelect").value = String(state.qualifyCount);
+      updateFormVisibility();
+      renderAll();
+      syncLive();
+    });
+
+    $("btnLive").addEventListener("click", () => {
+      userRole = "participant";
+      document.body.classList.add("live-mode");
+      $("roleGate").classList.add("hidden");
+      $("liveStatusPill").textContent = "LIVE - Paparan Peserta";
+      switchTab("groupView");
+
+      const attachLive = () => {
+        initFirebaseSafe();
+        if (!liveRef) return setTimeout(attachLive, 300);
+        liveRef.on("value", snap => {
+          const data = snap.val();
+          if (!data) return;
+          state = {
+            title: data.title || "MIDNIGHT GARAGE TOURNAMENT",
+            format: data.format || "group_knockout",
+            groupCount: data.groupCount || 2,
+            qualifyCount: data.qualifyCount || 2,
+            teamsText: data.teamsText || "",
+            groups: Array.isArray(data.groups) ? data.groups : [],
+            bracket: Array.isArray(data.bracket) ? data.bracket : [],
+            champion: data.champion || ""
+          };
+          renderAll();
+          if (state.format === "knockout") switchTab("bracketView");
+        });
+      };
+      attachLive();
+    });
+
+    $("teamCountLabel").textContent = getTeamList().length;
+    updateFormVisibility();
+  })();
+  </script>
+</body>
+</html>
