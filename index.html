@@ -21,7 +21,7 @@
     .role-gate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 20px; background: linear-gradient(rgba(2,7,13,.84), rgba(2,7,13,.92)), url('bg.jpg') center/cover no-repeat, #02070d; }
     .role-gate.hidden { display: none; }
     .gate-card { width: min(440px, 100%); padding: 28px 26px; border: 1px solid var(--line); border-radius: 22px; background: rgba(15, 30, 49, 0.94); box-shadow: var(--shadow); text-align: center; }
-    .gate-logo { width: 110px; height: 110px; object-fit: contain; margin: 0 auto 14px; display: block; border-radius: 18px; background: rgba(255,255,255,.06); padding: 10px; border: 1px solid var(--line); }
+        .gate-logo { position: absolute; top: 32px; left: 50%; transform: translateX(-50%); width: 160px; max-width: 55%; height: auto; object-fit: contain; display: block; filter: drop-shadow(0 10px 24px rgba(0,0,0,.7)); pointer-events: none; }
     .gate-card h2 { margin: 0 0 8px; color: var(--accent); }
     .gate-card p { color: var(--muted); font-size: 14px; margin-bottom: 18px; }
     .gate-actions { display: grid; gap: 10px; }
@@ -87,8 +87,8 @@
 </head>
 <body>
   <div id="roleGate" class="role-gate">
+       <img src="logo.png" alt="Logo Midnight Garage" class="gate-logo" onerror="this.style.display='none'" />
     <div class="gate-card">
-            <img src="logo.png" alt="Logo Midnight Garage" class="gate-logo" onerror="this.style.display='none'" />
       <h2>TOURNAMENT LIVE</h2>
       <p>Pilih mod paparan untuk melihat jadual perlawanan, carta kedudukan dan bracket kejohanan secara langsung.</p>
       <div class="gate-actions">
