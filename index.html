@@ -532,10 +532,45 @@ Team H</textarea>
       wrap.innerHTML = "";
       state.groups.forEach((g, gIdx) => {
         const card = el("article", "card");
-        const head = el("div", "card-head");
-        head.append(el("h2", "", g.name), el("span", "", `${g.teams.length} Pasukan`));
-        head.lastChild.style.cssText = "font-size:12px;color:var(--muted);";
+                const head = el("div", "card-head");
+        const titleWrap = el("div");
+        titleWrap.style.cssText = "display:flex;align-items:center;gap:8px;flex-wrap:wrap;";
+        titleWrap.appendChild(el("h2", "", g.name));
 
+        if (userRole === "admin") {
+          const editBtn = el("button", "secondary-btn", "✏️ Ubah Nama");
+          editBtn.type = "button";
+          editBtn.style.cssText = "padding:5px 10px;font-size:11px;border-radius:8px;";
+          editBtn.onclick = () => {
+            const newName = prompt("Masukkan nama baharu untuk kumpulan ini:", g.name);
+            if (newName && newName.trim()) {
+              state.groups[gIdx].name = newName.trim();
+              syncLive();
+              renderAll();
+              showToast("Nama kumpulan dikemas kini!");
+            }
+          };
+          titleWrap.appendChild(editBtn);
+        }
+
+        const rightMeta = el("div");
+        rightMeta.style.cssText = "display:flex;align-items:center;gap:10px;";
+        const countSpan = el("span", "", `${g.teams.length} Pasukan`);
+        countSpan.style.cssText = "font-size:12px;color:var(--muted);";
+        const infoBtn = el("button", "secondary-btn", "ⓘ Info & Tie-Breaker");
+        infoBtn.type = "button";
+        infoBtn.style.cssText = "padding:5px 10px;font-size:11px;border-radius:8px;color:var(--accent-2);border-color:rgba(86,168,255,.35);";
+        rightMeta.append(countSpan, infoBtn);
+        head.append(titleWrap, rightMeta);
+
+        const infoBox = el("div");
+        infoBox.hidden = true;
+        infoBox.style.cssText = "padding:14px 18px;background:rgba(86,168,255,.08);border-bottom:1px solid var(--line);font-size:12px;color:var(--text);line-height:1.7;";
+        const line1 = el("div", "", "Singkatan: P = Perlawanan | M = Menang (3 Mata) | S = Seri (1 Mata) | K = Kalah (0 Mata) | JG = Jaringan Gol | GB = Gol Bolos | PG = Perbezaan Gol (JG - GB) | MATA = Jumlah Mata");
+        const line2 = el("div", "", "Sistem Tie-Breaker (Jika Mata Seri): 1. Perbezaan Gol (PG) tertinggi → 2. Jaringan Gol (JG) terbanyak → 3. Susunan abjad (A-Z).");
+        line2.style.cssText = "margin-top:6px;color:var(--accent);font-weight:700;";
+        infoBox.append(line1, line2);
+        infoBtn.onclick = () => { infoBox.hidden = !infoBox.hidden; };
         const body = el("div", "card-body");
         const tblWrap = el("div");
         tblWrap.style.cssText = "overflow-x:auto;margin-bottom:18px;";
@@ -592,7 +627,7 @@ Team H</textarea>
         });
 
         body.append(tblWrap, matchGrid);
-        card.append(head, body);
+             card.append(head, infoBox, body);
         wrap.appendChild(card);
       });
     };
